@@ -18,10 +18,6 @@ const useMiddlwares = (app) => {
   // Configuring Passport
   const usePassport = require("../middlewares/passport");
   usePassport(app);
-
-  // Serving Static Files
-  const useExpressStatic = require("../middlewares/express-static");
-  useExpressStatic(app);
 };
 
 module.exports = useMiddlwares;

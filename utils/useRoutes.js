@@ -1,5 +1,3 @@
-const path = require("path");
-
 const useRoutes = (app) => {
   // User Routes
   const userRoute = require("../routes/user");
@@ -44,11 +42,6 @@ const useRoutes = (app) => {
   // Checkout Routes
   const braintreeRoute = require("../routes/braintree");
   app.use("/api/checkout", braintreeRoute);
-
-  // Catch-all route to serve index.html for any other route
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../client", "dist", "index.html"));
-  });
 };
 
 module.exports = useRoutes;
