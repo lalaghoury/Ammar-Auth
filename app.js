@@ -1,6 +1,10 @@
 const app = require("express")();
 require("dotenv").config();
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
 // Middlewares
 
 const useMiddlwares = require("./utils/useMiddlwares");
