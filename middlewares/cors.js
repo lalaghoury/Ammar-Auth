@@ -3,7 +3,7 @@ const cors = require("cors");
 const useCors = (app) => {
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: "https://euphoria-frontend-dnfjmhfka-aasil-ghourys-projects.vercel.app",
       credentials: true,
     })
   );
