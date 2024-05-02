@@ -1,4 +1,4 @@
-const useMiddlwares = (app) => {
+const useMiddlwares = (app, mongooseConnection) => {
   // Configuring Express JSON
   const useJson = require("../middlewares/json");
   useJson(app);
@@ -13,7 +13,7 @@ const useMiddlwares = (app) => {
 
   // Configuring Express Session
   const useExpressSession = require("../middlewares/express-session");
-  useExpressSession(app);
+  useExpressSession(app, mongooseConnection);
 
   // Configuring Passport
   const usePassport = require("../middlewares/passport");
