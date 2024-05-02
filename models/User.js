@@ -29,7 +29,6 @@ const userSchema = new Schema(
       default: "local",
       enum: ["local", "google", "discord"],
     },
-    // orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   },
   { timestamps: true }
 );
