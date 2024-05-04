@@ -2,9 +2,9 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const Address = require("../models/Address");
-const authMiddleware = require("../middlewares/authMiddleware");
+const { requireSignin } = require("../middlewares/authMiddleware");
 
-router.post("/add", authMiddleware.requireSignin, async (req, res) => {
+router.post("/new", requireSignin, async (req, res) => {
   try {
     const newAddress = await new Address({
       ...req.body,
@@ -36,7 +36,7 @@ router.post("/add", authMiddleware.requireSignin, async (req, res) => {
   }
 });
 
-router.get("/", authMiddleware.requireSignin, async (req, res) => {
+router.get("/", requireSignin, async (req, res) => {
   try {
     const addresses = await Address.find({ user: req.user.userId });
 
@@ -51,8 +51,8 @@ router.get("/", authMiddleware.requireSignin, async (req, res) => {
   }
 });
 
-router.put("/edit", authMiddleware.requireSignin, async (req, res) => {
-  const { addressId, ...rest } = req.body;
+router.put("/update/:id", requireSignin, async (req, res) => {
+  const { id: addressId } = req.params;
 
   if (!addressId) {
     return res
@@ -63,7 +63,7 @@ router.put("/edit", authMiddleware.requireSignin, async (req, res) => {
   try {
     const updatedAddress = await Address.findOneAndUpdate(
       { _id: addressId, user: req.user.userId },
-      { ...rest },
+      req.body,
       { new: true }
     );
 
@@ -84,8 +84,8 @@ router.put("/edit", authMiddleware.requireSignin, async (req, res) => {
   }
 });
 
-router.delete("/remove", authMiddleware.requireSignin, async (req, res) => {
-  const { productId } = req.body;
+router.delete("/delete/:id", requireSignin, async (req, res) => {
+  const { id: productId } = req.params;
 
   if (!productId) {
     return res

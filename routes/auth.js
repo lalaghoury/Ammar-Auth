@@ -15,7 +15,6 @@ router.get("/verify", requireSignin, authController.verifySignin);
 router.get("/verify/admin", isAdmin, authController.verifySignin);
 
 router.get("/google", passport.authenticate("google"), authController.done);
-router.get("/twitter", passport.authenticate("twitter"), authController.done);
 router.get("/facebook", passport.authenticate("facebook"), authController.done);
 router.get("/discord", passport.authenticate("discord"), authController.done);
 

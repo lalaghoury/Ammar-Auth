@@ -21,7 +21,11 @@ const userSchema = new Schema(
     },
     resetToken: { type: String, default: "" },
     resetTokenExpiration: { type: Date, default: null },
-    status: { type: String, default: "active", enum: ["active", "disabled","blocked"] },
+    status: {
+      type: String,
+      default: "active",
+      enum: ["active", "disabled", "blocked"],
+    },
     addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
     wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     provider: {

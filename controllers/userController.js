@@ -30,7 +30,7 @@ module.exports = userController = {
         .json({ error, message: "Failed to get user", success: false });
     }
   },
-  getUser: async (req, res) => {
+  getUserWithAuth: async (req, res) => {
     try {
       const user = await User.findById(req.user.userId);
       res.json({ user, success: true, message: "User fetched" });
@@ -61,7 +61,7 @@ module.exports = userController = {
   deleteUser: async (req, res) => {
     try {
       const user = await User.findByIdAndDelete(req.params.id);
-      res.json({ user, success: true, message: "User deleted" });
+      res.json({ user, success: true, message: "User deleted Successfully" });
     } catch (error) {
       res.status(500).json({
         error: error.message,
