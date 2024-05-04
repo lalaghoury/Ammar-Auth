@@ -60,7 +60,7 @@ router.post("/payment", authMiddleware.requireSignin, async (req, res) => {
             user: req.user.userId,
           };
 
-          await fetch("http://localhost:5000/api/orders/new", {
+          await fetch(`${process.env.BASE_URL}/api/orders/new`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(orderObj),

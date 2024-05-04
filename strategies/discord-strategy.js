@@ -6,14 +6,14 @@ const User = require("../models/User");
 require("dotenv").config();
 
 passport.serializeUser((user, done) => {
-  done(null, user._id);
+  done(null, user);
 });
 
-passport.deserializeUser(async (id, done) => {
+passport.deserializeUser(async (user, done) => {
   try {
-    const user = await User.findById(id);
     if (!user) throw new Error("User Not Found");
-    done(null, user);
+    const token = SignToken(user);
+    done(null, token);
   } catch (err) {
     done(err, null);
   }
@@ -24,7 +24,7 @@ passport.use(
     {
       clientID: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/api/auth/discord/callback",
+      callbackURL: `${process.env.BASE_URL}/api/auth/discord/callback`,
       scope: ["identify", "email"],
       usernameField: "email",
     },

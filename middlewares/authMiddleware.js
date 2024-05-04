@@ -1,18 +1,25 @@
 const User = require("../models/User");
 require("dotenv").config();
+const JWT = require("jsonwebtoken");
 
 const requireSignin = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user?._id);
+    const token = req.user;
 
-    if (!user || user.status !== "active") {
+    if (!token) {
+      return res.status(401).send("Access denied. No token provided.");
+    }
+
+    const decode = JWT.verify(token, process.env.JWT_SECRET_KEY);
+
+    if (!decode || decode.status !== "active") {
       return res.status(401).json({
         message: "Profile not found. Please login again.",
         success: false,
       });
     }
 
-    req.user = { ...user._doc, userId: user._id };
+    req.user = { ...decode, userId: decode._id };
 
     next();
   } catch (error) {
@@ -25,25 +32,54 @@ const requireSignin = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user?._id);
+    const token = req.user;
 
-    if (!user) {
+    if (!token) {
+      return res.status(401).send("Access denied. No token provided.");
+    }
+
+    const decode = JWT.verify(token, process.env.JWT_SECRET_KEY);
+
+    if (!decode) {
       return res.status(401).json({
         message: "Profile not found. Please login again.",
         success: false,
       });
-    } else if (user.role !== "admin" || user.status !== "active") {
+    } else if (decode.role !== "admin" || decode.status !== "active") {
       return res.status(401).json({
         message: "You are not authorized to access this resource.",
         success: false,
       });
     }
 
-    req.user = { ...user._doc, userId: user._id };
+    req.user = { ...decode, userId: decode._id };
+
     next();
   } catch (error) {
     res.status(401).send({ success: false, message: "Unauthorized", error });
   }
 };
 
-module.exports = { requireSignin, isAdmin };
+const SignToken = (user) => {
+  return JWT.sign(
+    {
+      avatar: user.avatar,
+      name: user.name,
+      status: user.status,
+      email: user.email,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      newsletter: user.newsletter,
+      phone: user.phone,
+      role: user.role,
+      provider: user.provider,
+      _id: user._id,
+    },
+    process.env.JWT_SECRET_KEY,
+    {
+      expiresIn: "7d",
+    }
+  );
+};
+
+module.exports = { requireSignin, isAdmin, SignToken };

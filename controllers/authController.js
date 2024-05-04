@@ -72,7 +72,9 @@ module.exports = authController = {
           </head>
           <body>
             <p>Hi ${user.name}, welcome to our platform!.</p>
-            <button style="background-color: #4CAF50; color: white; padding: 14px 20px; margin: 8px 0; border: none; cursor: pointer; width: 100%;" ><a style="text-decoration: none; color: white;" href="http://localhost:3000/" target="_blank">Click here</a></button>
+            <button style="background-color: #4CAF50; color: white; padding: 14px 20px; margin: 8px 0; border: none; cursor: pointer; width: 100%;">
+              <a style="text-decoration: none; color: white;" href="${process.env.CLIENT_AUTH_SUCCESS_URL}" target="_blank">Click here</a>
+            </button>
           </body>
         </html>`
     );
@@ -99,17 +101,6 @@ module.exports = authController = {
     }
   },
 
-  done: async (req, res) => {
-    try {
-      const user = req.user;
-      res
-        .status(200)
-        .json({ message: "Sign in successful!", success: true, user });
-    } catch (error) {
-      res.status(400).json({ message: error.message, success: false });
-    }
-  },
-
   signOut: (req, res) => {
     req.logout();
     res.json({ message: "Logged out successfully", success: true });
@@ -130,7 +121,7 @@ module.exports = authController = {
         { email },
         { resetToken, resetTokenExpiration: expirationTime }
       );
-      const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+      const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
       await sendEmail(
         email,
         "Password Reset",
@@ -193,7 +184,14 @@ module.exports = authController = {
     }
   },
 
-  verifySignin: (req, res) => {
-    res.status(200).send({ success: true, user: req.user });
+  verified: (req, res) => {
+    try {
+      const user = req.user;
+      res
+        .status(200)
+        .json({ message: "Sign in successful!", success: true, user });
+    } catch (error) {
+      res.status(400).json({ message: error.message, success: false });
+    }
   },
 };
