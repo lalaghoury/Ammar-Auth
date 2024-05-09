@@ -3,10 +3,13 @@ const Coupon = require("../models/Coupon");
 
 const cartController = {
   listCart: async (req, res) => {
-    const userId = req.user.userId;
+    const { _id: userId } = req.user;
 
     try {
-      const cart = await Cart.findOne({ userId }).populate("items.productId");
+      const cart = await Cart.findOne({ userId }).populate({
+        path: "items.productId",
+        select: "thumbnail name price colors",
+      });
       res.json({ success: true, cart, message: "Cart fetched successfully" });
     } catch (err) {
       console.error(err);
@@ -31,10 +34,10 @@ const cartController = {
   },
 
   createCart: async (req, res) => {
-    const { productId, quantity, price } = req.body;
+    const { productId, quantity, price, color, size } = req.body;
     const userId = req.user.userId;
 
-    if (!quantity || !productId || !price || !userId) {
+    if (!quantity || !productId || !price || !userId || !color || !size) {
       return res
         .status(400)
         .json({ message: "Something went wrong, please try again" });
@@ -55,7 +58,13 @@ const cartController = {
         cart.items[index].quantity += quantity;
         cart.items[index].price = price * quantity;
       } else {
-        cart.items.push({ productId, quantity, price: price * quantity });
+        cart.items.push({
+          productId,
+          quantity,
+          price: price * quantity,
+          color,
+          size,
+        });
       }
 
       cart.price += price * quantity;
@@ -69,7 +78,7 @@ const cartController = {
       });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: err.message });
     }
   },
 

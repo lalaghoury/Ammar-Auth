@@ -76,7 +76,6 @@ router.post("/signup", authController.signUp);
 router.post("/signout", authController.signOut);
 router.post("/send-verification-link", authController.sendVerificationLink);
 router.post("/reset-password/:resetToken", authController.resetPassword);
-
 router.get("/login/failed", (req, res) => {
   res.redirect(
     `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(

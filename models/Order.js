@@ -11,6 +11,8 @@ const orderSchema = new Schema(
           required: [true, "Product is required"],
         },
         quantity: { type: Number, required: [true, "Quantity is required"] },
+        color: { type: String, required: [true, "Color is required"] },
+        size: { type: String, required: [true, "Size is required"] },
       },
     ],
     user: {
@@ -31,6 +33,11 @@ const orderSchema = new Schema(
     },
     payment: {},
     shipping_address: {
+      type: Schema.Types.ObjectId,
+      ref: "Address",
+      required: [true, "Shipping address is required"],
+    },
+    billing_address: {
       type: Schema.Types.ObjectId,
       ref: "Address",
       required: [true, "Shipping address is required"],

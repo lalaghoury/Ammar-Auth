@@ -5,14 +5,18 @@ const bcrypt = require("bcryptjs");
 const { SignToken } = require("../middlewares/authMiddleware");
 
 passport.serializeUser((user, done) => {
-  done(null, user);
+  done(null, user._id);
 });
 
-passport.deserializeUser(async (user, done) => {
+passport.deserializeUser(async (id, done) => {
   try {
-    if (!user) throw new Error("User Not Found");
+    const user = await User.findById(id);
+    if (!user) {
+      return done(new Error("User Not Found"), null);
+    }
     const token = SignToken(user);
-    done(null, token);
+    user.token = token;
+    done(null, user);
   } catch (err) {
     done(err, null);
   }
@@ -23,16 +27,16 @@ passport.use(
     try {
       const user = await User.findOne({ email });
 
+      if (!user) {
+        return done(null, false, {
+          message: "User with that email does not exist!",
+        });
+      }
+
       if (user && user.provider !== "local") {
         return done(null, false, {
           message: `Email is already registered. Sign in with ${user.provider}.`,
           success: false,
-        });
-      }
-
-      if (!user) {
-        return done(null, false, {
-          message: "User with that email does not exist!",
         });
       }
 

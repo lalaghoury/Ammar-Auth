@@ -3,7 +3,8 @@ const router = express.Router();
 const braintree = require("braintree");
 require("dotenv").config();
 const Cart = require("../models/Cart");
-const authMiddleware = require("../middlewares/authMiddleware");
+const Order = require("../models/Order");
+const { requireSignin } = require("../middlewares/authMiddleware");
 
 const gateway = new braintree.BraintreeGateway({
   environment: braintree.Environment.Sandbox,
@@ -26,11 +27,18 @@ router.get("/token", (req, res) => {
   }
 });
 
-router.post("/payment", authMiddleware.requireSignin, async (req, res) => {
+router.post("/payment", requireSignin, async (req, res) => {
   try {
-    const { amount, nonce, products, shipping_address } = req.body;
+    const { amount, nonce, products, shipping_address, billing_address } =
+      req.body;
 
-    if (!amount || !nonce || !products || !shipping_address) {
+    if (
+      !amount ||
+      !nonce ||
+      !products ||
+      !shipping_address ||
+      !billing_address
+    ) {
       res
         .status(500)
         .send({ message: "Something went wrong, please try again later." });
@@ -54,17 +62,24 @@ router.post("/payment", authMiddleware.requireSignin, async (req, res) => {
         } else {
           const orderObj = {
             products,
-            payment: result.transaction,
-            shipping_address,
+            payment: result.transaction.creditCard,
+            shipping_address:
+              shipping_address === "billing"
+                ? billing_address
+                : shipping_address,
+            billing_address,
             amount,
             user: req.user.userId,
           };
 
-          await fetch(`${process.env.BASE_URL}/api/orders/new`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(orderObj),
-          });
+          try {
+            await new Order(orderObj).save();
+          } catch (error) {
+            console.error("Error creating order:", error);
+            res.status(500).send({
+              message: "Something went wrong, please try again later.",
+            });
+          }
 
           const cart = await Cart.findOneAndUpdate(
             { userId: req.user.userId },

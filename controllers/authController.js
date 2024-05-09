@@ -50,6 +50,13 @@ module.exports = authController = {
   signIn: async (req, res) => {
     const user = req.user;
 
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found, Please login again!",
+      });
+    }
+
     await sendEmail(
       user.email,
       "Login Successful",
@@ -102,8 +109,30 @@ module.exports = authController = {
   },
 
   signOut: (req, res) => {
-    req.logout();
-    res.json({ message: "Logged out successfully", success: true });
+    try {
+      req.logout((err) => {
+        if (err) {
+          console.error(err);
+          return res
+            .status(500)
+            .json({ message: "Failed to logout", success: false });
+        }
+
+        req.session.destroy((err) => {
+          if (err) {
+            console.error(err);
+            return res
+              .status(500)
+              .json({ message: "Failed to destroy session", success: false });
+          }
+
+          res.json({ message: "Logged out successfully", success: true });
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to logout", success: false });
+    }
   },
 
   sendVerificationLink: async (req, res) => {

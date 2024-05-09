@@ -47,17 +47,18 @@ const productSchema = new Schema(
       {
         name: {
           type: String,
-          required: true,
-          default: "image1.jpg",
+          required: [true, "Name is required"],
         },
         url: {
           type: String,
-          required: true,
-          default:
-            "https://res.cloudinary.com/dslrkvmwn/image/upload/v1710662389/images/e95plvwwibetuyvwmcxe.jpg",
+          required: [true, "Url is required"],
         },
       },
     ],
+    thumbnail: {
+      type: String,
+      required: [true, "Thumbnail is required"],
+    },
     sku: {
       type: String,
     },

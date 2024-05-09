@@ -1,10 +1,9 @@
-const User = require("../models/User");
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
 
 const requireSignin = async (req, res, next) => {
   try {
-    const token = req.user;
+    const token = req?.user?.token;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -19,6 +18,14 @@ const requireSignin = async (req, res, next) => {
       });
     }
 
+    if (decode._id.toString() !== req.user._id.toString()) {
+      return res.status(401).json({
+        message: "You are not authorized to access this resource.",
+        success: false,
+      });
+    }
+
+
     req.user = { ...decode, userId: decode._id };
 
     next();
@@ -32,7 +39,7 @@ const requireSignin = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    const token = req.user;
+    const { token } = req.user;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -46,6 +53,13 @@ const isAdmin = async (req, res, next) => {
         success: false,
       });
     } else if (decode.role !== "admin" || decode.status !== "active") {
+      return res.status(401).json({
+        message: "You are not authorized to access this resource.",
+        success: false,
+      });
+    }
+
+    if (decode._id.toString() !== req.user._id.toString()) {
       return res.status(401).json({
         message: "You are not authorized to access this resource.",
         success: false,
