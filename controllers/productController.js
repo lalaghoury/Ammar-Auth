@@ -26,8 +26,17 @@ const productController = {
   },
 
   listFilteredProducts: async (req, res) => {
-    const { minPrice, maxPrice, category, dressStyle, query, colors, sizes } =
-      req.query;
+    const {
+      minPrice,
+      maxPrice,
+      category,
+      dressStyle,
+      query,
+      colors,
+      sizes,
+      limit,
+      offset,
+    } = req.query;
     const filters = {};
 
     if (minPrice && maxPrice) {
@@ -62,7 +71,7 @@ const productController = {
       ];
     }
 
-    const products = await Product.find(filters);
+    const products = await Product.find(filters).limit(limit);
 
     res.json({
       success: true,
@@ -161,6 +170,24 @@ const productController = {
         count: products.length,
         success: true,
         message: "Wishlist products count fetched successfully",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Internal Server Error",
+        success: false,
+        error: error.message,
+      });
+    }
+  },
+
+  getLazyProducts: async (req, res) => {
+    const { offset, limit } = req.query;
+    try {
+      const products = await Product.find().skip(offset).limit(limit);
+      res.status(200).json({
+        products: products.reverse(),
+        success: true,
       });
     } catch (error) {
       console.error(error);

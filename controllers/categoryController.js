@@ -76,6 +76,37 @@ const categoryController = {
     }
   },
 
+  readCategoryByName: async (req, res) => {
+    const { categoryName } = req.params;
+
+    if (!categoryName) {
+      return res
+        .status(400)
+        .json({ message: "Category name is required", success: false });
+    }
+
+    try {
+      const category = await Category.findOne({ slug: categoryName }).populate(
+        "products"
+      );
+      if (!category) {
+        return res
+          .status(404)
+          .json({ message: "Category not found", success: false });
+      }
+      res.json({
+        category,
+        products: category.products,
+        success: true,
+        message: "Category fetched successfully",
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error, message: "Category fetch failed", success: false });
+    }
+  },
+
   updateCategory: async (req, res) => {
     const { categoryId } = req.params;
     try {

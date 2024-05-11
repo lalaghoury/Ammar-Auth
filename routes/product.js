@@ -6,40 +6,43 @@ const { requireSignin, isAdmin } = require("../middlewares/authMiddleware");
 // Get All Products
 router.get("/all", productController.listProducts);
 
+// Get Single Product
+router.get("/single/:productId", productController.readProduct);
+
+// Get lazy load products
+router.get("/lazy-load", productController.getLazyProducts);
+
 // Get All Product Names
 router.get("/names", productController.listProductsNames);
 
 // GET Filtered Products
 router.get("/filter", productController.listFilteredProducts);
 
-//getProductsByUserWishlists
+// Get Products by User Wishlists
 router.get(
   "/user-wishlist",
   requireSignin,
   productController.readWishlistProducts
 );
 
-///user-wishlist-count
+// Get User Wishlist Count
 router.get(
   "/user-wishlist-count",
   requireSignin,
   productController.readWishlistProductsCount
 );
 
-// Get Single Product
-router.get("/:productId", productController.readProduct);
-
 // Create New Product
 router.post("/new", isAdmin, productController.createProduct);
 
-// Create New Product
+// Add Product to Wishlist
 router.post(
   "/add-to-wishlist/:productId",
   requireSignin,
   productController.addToWishlist
 );
 
-// Remove Product from wishlist
+// Remove Product from Wishlist
 router.post(
   "/remove-from-wishlist/:productId",
   requireSignin,

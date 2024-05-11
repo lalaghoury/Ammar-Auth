@@ -17,7 +17,7 @@ const categorySchema = new Schema(
     },
     description: { type: String, required: false },
     products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
-    image: { type: String, required: true },
+    image: { type: String, required: [true, "Image is required"] },
   },
   { timestamps: true }
 );
