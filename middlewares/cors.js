@@ -8,6 +8,7 @@ const useCors = (app) => {
         "http://localhost:5173",
         "http://localhost:3000",
         "https://euphoria-frontend-theta.vercel.app",
+        "https://euphoria-eight.vercel.app",
       ],
       credentials: true,
     })
