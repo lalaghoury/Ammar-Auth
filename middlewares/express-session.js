@@ -8,12 +8,13 @@ const useExpressSession = (app, mongooseConnection) => {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        // secure: process.env.NODE_ENV === "production",
-        sameSite: "None",
-        secure: true,
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
-        domain: "https://euphoria-frontend-theta.vercel.app"
+        domain:
+          process.env.NODE_ENV === "production"
+            ? "euphoria-frontend-theta.vercel.app"
+            : undefined,
       },
       store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
     })
