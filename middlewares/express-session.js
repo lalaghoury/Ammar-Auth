@@ -9,12 +9,9 @@ const useExpressSession = (app, mongooseConnection) => {
       saveUninitialized: false,
       cookie: {
         sameSite: "strict",
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === "production",
       },
-      store: new MongoStore({
-        mongoUrl: process.env.MONGO_URL,
-        mongooseConnection,
-      }),
+      store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
     })
   );
 };
