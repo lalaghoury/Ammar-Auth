@@ -1,15 +1,15 @@
-const useMiddlwares = (app, mongooseConnection) => {
+const useMiddlewares = (app, mongooseConnection) => {
   // Configuring Express JSON
   const useJson = require("../middlewares/json");
   useJson(app);
 
-  // Configuring CORS
-  const useCors = require("../middlewares/cors");
-  useCors(app);
-
   // Configuring Cookie Parser
   const useCookieParser = require("../middlewares/cookie-parser");
   useCookieParser(app);
+
+  // Configuring CORS
+  const useCors = require("../middlewares/cors");
+  useCors(app);
 
   // Configuring Express Session
   const useExpressSession = require("../middlewares/express-session");
@@ -20,4 +20,4 @@ const useMiddlwares = (app, mongooseConnection) => {
   usePassport(app);
 };
 
-module.exports = useMiddlwares;
+module.exports = useMiddlewares;
