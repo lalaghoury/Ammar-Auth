@@ -9,7 +9,8 @@ const addressSchema = new Schema(
     appartment: { type: String },
     street: { type: String, required: true },
     address_line_2: { type: String },
-    city: { type: String, required: true },
+    city: { 
+      type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true, default: "UK" },
     pincode: { type: String, required: true },
