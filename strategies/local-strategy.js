@@ -2,6 +2,7 @@ const passport = require("passport");
 const { Strategy } = require("passport-local");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const { SignToken } = require("../middlewares/authMiddleware");
 
 passport.serializeUser((user, done) => {
   done(null, user._id);
@@ -13,6 +14,8 @@ passport.deserializeUser(async (id, done) => {
     if (!user) {
       return done(new Error("User Not Found"), null);
     }
+    const token = SignToken(user);
+    user.token = token;
     done(null, user);
   } catch (err) {
     done(err, null);

@@ -3,8 +3,7 @@ const JWT = require("jsonwebtoken");
 
 const requireSignin = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer token
+    const token = req?.user?.token;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -15,6 +14,13 @@ const requireSignin = async (req, res, next) => {
     if (!decode || decode.status !== "active") {
       return res.status(401).json({
         message: "Profile not found. Please login again.",
+        success: false,
+      });
+    }
+
+    if (decode._id.toString() !== req.user._id.toString()) {
+      return res.status(401).json({
+        message: "You are not authorized to access this resource.",
         success: false,
       });
     }
@@ -32,8 +38,7 @@ const requireSignin = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer token
+    const token = req?.user?.token;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -47,6 +52,13 @@ const isAdmin = async (req, res, next) => {
         success: false,
       });
     } else if (decode.role !== "admin" || decode.status !== "active") {
+      return res.status(401).json({
+        message: "You are not authorized to access this resource.",
+        success: false,
+      });
+    }
+
+    if (decode._id.toString() !== req.user._id.toString()) {
       return res.status(401).json({
         message: "You are not authorized to access this resource.",
         success: false,
