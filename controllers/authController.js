@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../config/nodemailerConfig");
 const cryptoObj = require("crypto");
+const { SignToken } = require("../middlewares/authMiddleware");
 
 module.exports = authController = {
   signUp: async (req, res) => {
@@ -86,6 +87,8 @@ module.exports = authController = {
         </html>`
     );
 
+    const token = SignToken(user);
+
     try {
       res.json({
         message: "Sign in successful!",
@@ -102,6 +105,7 @@ module.exports = authController = {
           role: user.role,
           _id: user._id,
         },
+        token,
       });
     } catch (error) {
       res.status(400).json({ message: error.message, success: false });

@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../config/nodemailerConfig");
 const User = require("../models/User");
 require("dotenv").config();
-const { SignToken } = require("../middlewares/authMiddleware");
 
 passport.serializeUser((user, done) => {
   done(null, user._id);
@@ -14,8 +13,6 @@ passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
     if (!user) throw new Error("User Not Found");
-    const token = SignToken(user);
-    user.token = token;
     done(null, user);
   } catch (err) {
     done(err, null);
