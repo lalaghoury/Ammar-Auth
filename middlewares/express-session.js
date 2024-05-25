@@ -8,8 +8,8 @@ const useExpressSession = (app, mongooseConnection) => {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        sameSite: "none",
-        secure: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
       },
       store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
     })
