@@ -10,8 +10,10 @@ const useExpressSession = (app, mongooseConnection) => {
       cookie: {
         // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         // secure: process.env.NODE_ENV === "production",
-        sameSite: "none",
+        sameSite: "None",
         secure: true,
+        path: "/",
+        domain: "https://euphoria-frontend-theta.vercel.app"
       },
       store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
     })
