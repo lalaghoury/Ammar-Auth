@@ -1,3 +1,4 @@
+const path = require("path");
 const useRoutes = (app) => {
   // Welcome Route
   app.get("/", (req, res) => {
@@ -47,6 +48,8 @@ const useRoutes = (app) => {
   // Checkout Routes
   const braintreeRoute = require("../routes/braintree");
   app.use("/api/checkout", braintreeRoute);
+
+
 };
 
 module.exports = useRoutes;

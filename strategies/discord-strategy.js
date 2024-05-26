@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../config/nodemailerConfig");
 const User = require("../models/User");
 const { SignToken } = require("../middlewares/authMiddleware");
-require("dotenv").config();
 
 passport.serializeUser((user, done) => {
   done(null, user._id);
