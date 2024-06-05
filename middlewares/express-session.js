@@ -8,10 +8,8 @@ const useExpressSession = (app) => {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        // secure: process.env.NODE_ENV === "production",
-        sameSite: "none",
-        secure: true,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        secure: process.env.NODE_ENV === "production",
       },
     })
   );

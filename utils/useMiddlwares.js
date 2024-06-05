@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 
-const useMiddlewares = (app, mongooseConnection) => {
+const useMiddlewares = (app) => {
   // Configuring Express JSON
   const useJson = require("../middlewares/json");
   useJson(app);
@@ -12,7 +12,7 @@ const useMiddlewares = (app, mongooseConnection) => {
 
   // Configuring Express Session
   const useExpressSession = require("../middlewares/express-session");
-  useExpressSession(app, mongooseConnection);
+  useExpressSession(app);
 
   // Configuring Passport
   const usePassport = require("../middlewares/passport");
