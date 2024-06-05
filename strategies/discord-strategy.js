@@ -3,7 +3,6 @@ const DiscordStrategy = require("passport-discord").Strategy;
 const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../config/nodemailerConfig");
 const User = require("../models/User");
-const { SignToken } = require("../middlewares/authMiddleware");
 
 passport.serializeUser((user, done) => {
   done(null, user._id);
@@ -14,8 +13,6 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     if (!user) throw new Error("User Not Found");
     done(null, user);
-    const token = SignToken(user);
-    user.token = token;
   } catch (err) {
     done(err, null);
   }

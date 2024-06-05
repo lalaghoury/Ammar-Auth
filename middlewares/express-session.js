@@ -2,7 +2,7 @@
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
-const useExpressSession = (app, mongooseConnection) => {
+const useExpressSession = (app) => {
   app.use(
     session({
       secret: process.env.SECRET,
@@ -12,10 +12,6 @@ const useExpressSession = (app, mongooseConnection) => {
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         secure: process.env.NODE_ENV === "production",
       },
-      store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URL,
-        // mongooseConnection,
-      }),
     })
   );
 };

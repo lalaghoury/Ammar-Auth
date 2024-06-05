@@ -8,16 +8,19 @@ require("../strategies/discord-strategy.js");
 const passport = require("passport");
 
 // Passport Routes
-router.post("/signin", passport.authenticate("local"), authController.signIn);
-router.get("/google", passport.authenticate("google"), authController.verified);
+router.post(
+  "/signin",
+  passport.authenticate("local", { session: false }),
+  authController.signIn
+);
 router.get(
-  "/facebook",
-  passport.authenticate("facebook"),
+  "/google",
+  passport.authenticate("google", { session: false }),
   authController.verified
 );
 router.get(
   "/discord",
-  passport.authenticate("discord"),
+  passport.authenticate("discord", { session: false }),
   authController.verified
 );
 

@@ -87,7 +87,10 @@ module.exports = authController = {
         </html>`
     );
 
+    const token = SignToken(user);
+
     try {
+      res.cookie("jwt", token);
       res.json({
         message: "Sign in successful!",
         success: true,
@@ -111,25 +114,9 @@ module.exports = authController = {
 
   signOut: (req, res) => {
     try {
-      req.logout((err) => {
-        if (err) {
-          console.error(err);
-          return res
-            .status(500)
-            .json({ message: "Failed to logout", success: false });
-        }
-
-        req.session.destroy((err) => {
-          if (err) {
-            console.error(err);
-            return res
-              .status(500)
-              .json({ message: "Failed to destroy session", success: false });
-          }
-
-          res.json({ message: "Logged out successfully", success: true });
-        });
-      });
+      // Clear the JWT cookie
+      res.clearCookie("jwt");
+      res.json({ message: "Logged out successfully", success: true });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to logout", success: false });
