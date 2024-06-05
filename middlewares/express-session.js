@@ -1,6 +1,5 @@
 // Cookies and Sessions Configuration
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
 
 const useExpressSession = (app) => {
   app.use(

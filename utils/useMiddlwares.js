@@ -10,10 +10,6 @@ const useMiddlewares = (app, mongooseConnection) => {
   const useCors = require("../middlewares/cors");
   useCors(app);
 
-  // Configuring Cookie Parser
-  const useCookieParser = require("../middlewares/cookie-parser");
-  useCookieParser(app);
-
   // Configuring Express Session
   const useExpressSession = require("../middlewares/express-session");
   useExpressSession(app, mongooseConnection);
