@@ -90,7 +90,11 @@ module.exports = authController = {
     const token = SignToken(user);
 
     try {
-      res.cookie("jwt", token);
+      res.cookie("jwt", token, {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
       res.json({
         message: "Sign in successful!",
         success: true,
