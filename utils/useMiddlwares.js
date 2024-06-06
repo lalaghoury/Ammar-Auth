@@ -1,4 +1,3 @@
-const express = require("express");
 const path = require("path");
 
 const useMiddlewares = (app) => {
@@ -10,9 +9,9 @@ const useMiddlewares = (app) => {
   const useCors = require("../middlewares/cors");
   useCors(app);
 
-  // Configuring Express Session
-  const useExpressSession = require("../middlewares/express-session");
-  useExpressSession(app);
+  // Configuring Cookie Parser
+  const useCookieParser = require("../middlewares/cookie-parser");
+  useCookieParser(app);
 
   // Configuring Passport
   const usePassport = require("../middlewares/passport");
