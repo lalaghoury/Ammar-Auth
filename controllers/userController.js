@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
 function removeNullUndefined(obj) {
   return Object.entries(obj).reduce((acc, [key, value]) => {
@@ -51,7 +52,61 @@ module.exports = userController = {
           new: true,
         }
       );
-      res.json({ user, success: true, message: "User updated" });
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      res.json({ user, success: true, message: "User updated successfully" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error, message: "Failed to update user", success: false });
+    }
+  },
+  updateUserPassword: async (req, res) => {
+    const filteredObj = removeNullUndefined(req.body);
+
+    try {
+      const { oldPassword, newPassword } = filteredObj;
+
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ message: "Old password is incorrect", success: false });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const updatedUser = await User.findByIdAndUpdate(
+        req.params.id,
+        { password: hashedPassword },
+        {
+          new: true,
+        }
+      );
+
+      if (!updatedUser) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      res.json({
+        user: updatedUser,
+        success: true,
+        message: "Password updated Successfully",
+      });
     } catch (error) {
       res
         .status(500)

@@ -8,7 +8,7 @@ router.get("/all", categoryController.listCategories);
 // Gett All Category Names
 router.get("/names", categoryController.listCategoriesNames);
 
-// Get All Categories
+// Get Category By Name
 router.get("/details/:categoryName", categoryController.readCategoryByName);
 
 // Get Single Category

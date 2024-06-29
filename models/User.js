@@ -15,9 +15,15 @@ const userSchema = new Schema(
     },
     phone: {
       type: String,
-      // required: [true, "Phone number is required"],
-      default: "+1 (466) 735-1162",
+      required: [true, "Phone number is required"],
       maxlength: 18,
+      validate: {
+        validator: function (v) {
+          return /^(\+?\d{1,3})?[-. (]*\d{3}[-. )]*\d{3}[-. ]*\d{4}$/.test(v);
+        },
+        message: "Please enter a valid phone number",
+      },
+      unique: true,
     },
     resetToken: { type: String, default: "" },
     resetTokenExpiration: { type: Date, default: null },
@@ -26,7 +32,6 @@ const userSchema = new Schema(
       default: "active",
       enum: ["active", "disabled", "blocked"],
     },
-    addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Address" }],
     wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     provider: {
       type: String,

@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController.js");
-const { requireSignin, isAdmin } = require("../middlewares/authMiddleware");
+const {
+  requireSignin,
+  isAdmin,
+  notRequireSignin,
+} = require("../middlewares/authMiddleware");
 require("../strategies/local-strategy");
 require("../strategies/google-strategy.js");
 require("../strategies/discord-strategy.js");
@@ -13,71 +17,68 @@ router.post(
   passport.authenticate("local", { session: false }),
   authController.signIn
 );
-router.get(
-  "/google",
-  passport.authenticate("google", { session: false }),
-  authController.verified
-);
-router.get(
-  "/discord",
-  passport.authenticate("discord", { session: false }),
-  authController.verified
-);
+router.get("/google", passport.authenticate("google", { session: false }));
+router.get("/discord", passport.authenticate("discord", { session: false }));
 
 // Passport Callback Routes
-router.get("/google/callback", (req, res, next) => {
-  passport.authenticate("google", (err, user, info) => {
-    if (err) {
-      return res.redirect(
-        `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
-          err.message
-        )}`
-      );
-    }
-    if (!user) {
-      return res.redirect(
-        `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
-          info.message
-        )}`
-      );
-    }
-    req.logIn(user, (err) => {
+router.get(
+  "/google/callback",
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
       if (err) {
-        return next(err);
+        return res.redirect(
+          `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
+            err.message
+          )}`
+        );
       }
-      return res.redirect(process.env.CLIENT_AUTH_SUCCESS_URL);
-    });
-  })(req, res, next);
-});
-router.get("/discord/callback", (req, res, next) => {
-  passport.authenticate("discord", (err, user, info) => {
-    if (err) {
-      return res.redirect(
-        `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
-          err.message
-        )}`
-      );
-    }
-    if (!user) {
-      return res.redirect(
-        `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
-          info.message
-        )}`
-      );
-    }
-    req.logIn(user, (err) => {
+      if (!user) {
+        return res.redirect(
+          `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
+            info.message
+          )}`
+        );
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  authController.callbackSignin
+);
+
+router.get(
+  "/discord/callback",
+  (req, res, next) => {
+    passport.authenticate("discord", (err, user, info) => {
       if (err) {
-        return next(err);
+        return res.redirect(
+          `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
+            err.message
+          )}`
+        );
       }
-      return res.redirect(process.env.CLIENT_AUTH_SUCCESS_URL);
-    });
-  })(req, res, next);
-});
+      if (!user) {
+        return res.redirect(
+          `${process.env.CLIENT_URL}/sign-in?error=${encodeURIComponent(
+            info.message
+          )}`
+        );
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  authController.callbackSignin
+);
 
 // Euphoria-Backend\routes\auth.js
 router.post("/signup", authController.signUp);
 router.post("/signout", authController.signOut);
-router.post("/send-verification-link", authController.sendVerificationLink);
+router.post(
+  "/send-verification-link",
+  notRequireSignin,
+  authController.sendVerificationLink
+);
 router.post("/reset-password/:resetToken", authController.resetPassword);
 router.get("/login/failed", (req, res) => {
   res.redirect(

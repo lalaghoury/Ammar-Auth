@@ -1,12 +1,10 @@
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
+const User = require("../models/User");
 
 const requireSignin = async (req, res, next) => {
   try {
-    // const token = req?.user?.token;
-    // const token = req?.headers?.authorization?.split(" ")[1]; // Bearer <token>
-
-    const token = req.cookies.jwt;
+    const token = req.cookies.auth;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -14,21 +12,16 @@ const requireSignin = async (req, res, next) => {
 
     const decode = JWT.verify(token, process.env.JWT_SECRET_KEY);
 
-    if (!decode || decode.status !== "active") {
+    const user = await User.findById(decode?.userId);
+
+    if (!user || user.status !== "active") {
       return res.status(401).json({
         message: "Profile not found. Please login again.",
         success: false,
       });
     }
 
-    // if (decode._id.toString() !== req.user._id.toString()) {
-    //   return res.status(401).json({
-    //     message: "You are not authorized to access this resource.",
-    //     success: false,
-    //   });
-    // }
-
-    req.user = { ...decode, userId: decode._id };
+    req.user = { ...user._doc, userId: user._id };
 
     next();
   } catch (error) {
@@ -41,10 +34,7 @@ const requireSignin = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    // const token = req?.user?.token;
-    // const token = req?.headers?.authorization?.split(" ")[1]; // Bearer <token>
-
-    const token = req.cookies.jwt;
+    const token = req.cookies.auth;
 
     if (!token) {
       return res.status(401).send("Access denied. No token provided.");
@@ -52,47 +42,34 @@ const isAdmin = async (req, res, next) => {
 
     const decode = JWT.verify(token, process.env.JWT_SECRET_KEY);
 
-    if (!decode) {
+    const user = await User.findById(decode?.userId);
+
+    if (!user) {
       return res.status(401).json({
         message: "Profile not found. Please login again.",
         success: false,
       });
-    } else if (decode.role !== "admin" || decode.status !== "active") {
+    } else if (user.role !== "admin" || user.status !== "active") {
       return res.status(401).json({
         message: "You are not authorized to access this resource.",
         success: false,
       });
     }
 
-    // if (decode._id.toString() !== req.user._id.toString()) {
-    //   return res.status(401).json({
-    //     message: "You are not authorized to access this resource.",
-    //     success: false,
-    //   });
-    // }
-
-    req.user = { ...decode, userId: decode._id };
+    req.user = { ...user._doc, userId: user._id };
 
     next();
   } catch (error) {
-    res.status(401).send({ success: false, message: "Unauthorized", error });
+    res
+      .status(401)
+      .send({ success: false, message: "Unauthorized", error: error.message });
   }
 };
 
-const SignToken = (user) => {
+const SignToken = (userId) => {
   return JWT.sign(
     {
-      avatar: user.avatar,
-      name: user.name,
-      status: user.status,
-      email: user.email,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      newsletter: user.newsletter,
-      phone: user.phone,
-      role: user.role,
-      provider: user.provider,
-      _id: user._id,
+      userId,
     },
     process.env.JWT_SECRET_KEY,
     {
@@ -101,4 +78,32 @@ const SignToken = (user) => {
   );
 };
 
-module.exports = { requireSignin, isAdmin, SignToken };
+const notRequireSignin = async (req, res, next) => {
+  try {
+    const token = req?.cookies?.auth;
+
+    if (token) {
+      const decode = JWT.verify(token, process.env.JWT_SECRET_KEY);
+
+      const user = await User.findById(decode?.userId);
+
+      if (!user || user.status !== "active") {
+        return res.status(401).json({
+          message: "Profile not found. Please login again.",
+          success: false,
+        });
+      }
+
+      req.user = { ...user._doc, userId: user._id };
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error in requireSignin middleware:", error);
+    return res.status(401).json({
+      message: "Please login to continue",
+    });
+  }
+};
+
+module.exports = { requireSignin, isAdmin, SignToken, notRequireSignin };

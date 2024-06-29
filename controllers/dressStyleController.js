@@ -39,6 +39,38 @@ const dressStyleController = {
     }
   },
 
+  readDressStyleByName: async (req, res) => {
+    const { Name } = req.params;
+
+    if (!Name) {
+      return res
+        .status(400)
+        .json({ message: "DressStyle name is required", success: false });
+    }
+
+    try {
+      const DressStyle = await DressStyle.findOne({ slug: Name }).populate(
+        "products"
+      );
+
+      if (!DressStyle) {
+        return res
+          .status(404)
+          .json({ message: "DressStyle not found", success: false });
+      }
+      res.json({
+        DressStyle,
+        products: DressStyle.products,
+        success: true,
+        message: "DressStyle fetched successfully",
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error, message: "Category fetch failed", success: false });
+    }
+  },
+
   createDressStyle: async (req, res) => {
     try {
       const newDressStyle = new DressStyle(req.body).save();

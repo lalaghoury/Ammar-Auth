@@ -37,19 +37,9 @@ const useRoutes = (app) => {
   const orderRoute = require("../routes/order");
   app.use("/api/orders", orderRoute);
 
-  // Coupon Routes
-  const couponRoute = require("../routes/coupon");
-  app.use("/api/coupon", couponRoute);
-
-  // Address Routes
-  const addressRoute = require("../routes/address");
-  app.use("/api/address", addressRoute);
-
   // Checkout Routes
-  const braintreeRoute = require("../routes/braintree");
-  app.use("/api/checkout", braintreeRoute);
-
-
+  const checkoutRoute = require("../routes/checkout");
+  app.use("/api/checkout", checkoutRoute);
 };
 
 module.exports = useRoutes;

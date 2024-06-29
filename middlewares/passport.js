@@ -5,7 +5,7 @@ const usePassport = (app) => {
   app.use(passport.initialize());
 
   // Initialize the session
-  // app.use(passport.session());
+  // app.use(passport.session()); // I donot need this
 };
 
 module.exports = usePassport;

@@ -5,9 +5,7 @@ const orderController = {
     try {
       const orders = await Order.find()
         .populate("user", "name email avatar")
-        .populate("products.productId", "name price images color")
-        .populate("shipping_address")
-        .populate("billing_address");
+        .populate("products.productId", "name price images color");
       res.send({ orders, success: true, message: "All orders fetched" });
     } catch (err) {
       res.status(500).send({
@@ -19,8 +17,7 @@ const orderController = {
     try {
       const orders = await Order.find({ user: req?.user?._id })
         .populate("user", "name email avatar")
-        .populate("products.productId", "name price thumbnail colors")
-        .populate("shipping_address");
+        .populate("products.productId", "name price thumbnail colors");
       res.send({ orders, success: true, message: "All orders fetched" });
     } catch (err) {
       res.status(500).send({
@@ -56,15 +53,9 @@ const orderController = {
     }
 
     try {
-      const order = await Order.findByIdAndUpdate(
-        req.params.id,
-        { status },
-        { new: true }
-      )
+      const order = await Order.findByIdAndUpdate(req.params.id, { status })
         .populate("user", "name email avatar")
-        .populate("products.productId", "name price images color")
-        .populate("shipping_address")
-        .populate("billing_address");
+        .populate("products.productId", "name price images color");
 
       if (!order) {
         res.status(404).send({

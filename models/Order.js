@@ -31,17 +31,36 @@ const orderSchema = new Schema(
         "Cancelled",
       ],
     },
-    payment: {},
+    payment: {
+      cardType: {
+        type: String,
+        required: [true, "Payment method is required"],
+      },
+      brand: { type: String, required: [true, "Payment method is required"] },
+      last4: { type: String, required: [true, "Payment method is required"] },
+      exp_month: {
+        type: Number,
+        required: [true, "Payment method is required"],
+      },
+      exp_year: {
+        type: Number,
+        required: [true, "Payment method is required"],
+      },
+      country: { type: String, required: [true, "Payment method is required"] },
+      imageUrl: {
+        type: String,
+        required: [true, "Payment method image is required"],
+      },
+    },
     shipping_address: {
-      type: Schema.Types.ObjectId,
-      ref: "Address",
+      type: Object,
       required: [true, "Shipping address is required"],
     },
     billing_address: {
-      type: Schema.Types.ObjectId,
-      ref: "Address",
+      type: Object,
       required: [true, "Shipping address is required"],
     },
+    coupon: { type: String, default: null },
     amount: { type: Number, required: [true, "Amount is required"] },
   },
   { timestamps: true }

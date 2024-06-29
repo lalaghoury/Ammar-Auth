@@ -1,5 +1,3 @@
-const path = require("path");
-
 const useMiddlewares = (app) => {
   // Configuring Express JSON
   const useJson = require("../middlewares/json");

@@ -1,15 +1,19 @@
 const Cart = require("../models/Cart");
-const Coupon = require("../models/Coupon");
+const Product = require("../models/Product");
 
 const cartController = {
   listCart: async (req, res) => {
     const { _id: userId } = req.user;
 
     try {
-      const cart = await Cart.findOne({ userId }).populate({
+      let cart = await Cart.findOne({ userId }).populate({
         path: "items.productId",
         select: "thumbnail name price colors",
       });
+      if (!cart) {
+        cart = new Cart({ userId, items: [] });
+        await cart.save();
+      }
       res.json({ success: true, cart, message: "Cart fetched successfully" });
     } catch (err) {
       console.error(err);
@@ -21,8 +25,12 @@ const cartController = {
     const userId = req.user.userId;
 
     try {
-      const cart = await Cart.findOne({ userId });
-      res.json({ success: true, count: cart?.items?.length });
+      let cart = await Cart.findOne({ userId });
+      if (!cart) {
+        cart = new Cart({ userId, items: [] });
+        await cart.save();
+      }
+      res.json({ success: true, count: cart.items.length });
     } catch (err) {
       console.error(err);
       res.status(500).json({
@@ -37,7 +45,7 @@ const cartController = {
     const { productId, quantity, price, color, size } = req.body;
     const userId = req.user.userId;
 
-    if (!quantity || !productId || !price || !userId || !color || !size) {
+    if (!quantity || !productId || !price || !userId) {
       return res
         .status(400)
         .json({ message: "Something went wrong, please try again" });
@@ -45,30 +53,33 @@ const cartController = {
 
     try {
       let cart = await Cart.findOne({ userId });
+      const product = await Product.findById(productId);
 
       if (!cart) {
         cart = new Cart({ userId, items: [] });
       }
 
       const index = cart.items.findIndex(
-        (item) => item.productId.toString() === productId.toString()
+        (item) =>
+          item.productId.toString() === productId.toString() &&
+          item.color === (color || product?.colors[0]) &&
+          item.size === (size || product?.sizes[0])
       );
 
       if (index !== -1) {
         cart.items[index].quantity += quantity;
-        cart.items[index].price = price * quantity;
+        cart.items[index].price = price * cart.items[index].quantity;
       } else {
         cart.items.push({
           productId,
           quantity,
           price: price * quantity,
-          color,
-          size,
+          color: color || product?.colors[0],
+          size: size || product?.sizes[0],
         });
       }
 
-      cart.price += price * quantity;
-      cart.total += cart.price;
+      cart.total = cart.items.reduce((total, item) => total + item.price, 0);
 
       await cart.save();
       res.status(201).json({
@@ -98,24 +109,15 @@ const cartController = {
       );
 
       if (index !== -1) {
-        const oldCartPrice = cart.price;
+        const oldCartTotal = cart.total;
         const oldItemPrice = cart.items[index].price;
         const newItemPrice = price * quantity;
-        const newCartPrice = oldCartPrice - oldItemPrice + newItemPrice;
+        const newCartTotal = oldCartTotal - oldItemPrice + newItemPrice;
 
         cart.items[index].quantity = quantity;
         cart.items[index].price = newItemPrice;
 
-        if (cart.couponApplied) {
-          const coupon = await Coupon.findOne({ code: cart.coupon });
-          const discount = coupon.discountPercent / 100;
-
-          const newSavings = discount * newCartPrice;
-          cart.savings = newSavings;
-        }
-
-        cart.price = newCartPrice;
-        cart.total = newCartPrice - cart.savings;
+        cart.total = newCartTotal;
 
         await cart.save();
         res.json({
@@ -144,30 +146,16 @@ const cartController = {
       );
 
       if (index !== -1) {
-        const oldCartPrice = cart.price;
+        const oldCartTotal = cart.total;
         const ItemPrice = cart.items[index].price;
-        const newCartPrice = oldCartPrice - ItemPrice;
-        if (cart.couponApplied) {
-          const coupon = await Coupon.findOne({ code: cart.coupon });
-          const discount = coupon.discountPercent / 100;
-
-          cart.savings = discount * newCartPrice;
-          cart.total = newCartPrice - cart.savings;
-        } else {
-          cart.total = newCartPrice;
-        }
-        cart.price = newCartPrice;
+        cart.total = oldCartTotal - ItemPrice;
         cart.items.splice(index, 1);
       } else {
         res.status(404).json({ message: "Item not found in cart" });
       }
 
       if (cart.items.length === 0) {
-        cart.couponApplied = false;
-        cart.coupon = null;
-        cart.price = 0;
         cart.total = 0;
-        cart.savings = 0;
       }
 
       await cart.save();

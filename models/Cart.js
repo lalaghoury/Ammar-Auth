@@ -22,14 +22,7 @@ const cartSchema = new Schema(
         price: { type: Number, default: 0 },
       },
     ],
-    couponApplied: { type: Boolean, default: false },
-    coupon: {
-      type: String,
-      default: null,
-    },
-    price: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
-    savings: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

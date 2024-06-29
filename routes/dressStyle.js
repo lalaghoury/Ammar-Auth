@@ -8,6 +8,9 @@ router.get("/all", dressStyleController.listDressStyles);
 // Gett All DressStyles Names
 router.get("/names", dressStyleController.listDressStylesNames);
 
+// Get DressStyle By Name
+router.get("/details/:Name", dressStyleController.readDressStyleByName);
+
 // Get Single DressStyle
 router.get("/:DressStyleId", dressStyleController.readDressStyle);
 

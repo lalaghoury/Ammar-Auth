@@ -6,14 +6,16 @@ const { SignToken } = require("../middlewares/authMiddleware");
 
 module.exports = authController = {
   signUp: async (req, res) => {
-    try {
-      if (!req.body.email || !req.body.name || !req.body.password) {
-        return res
-          .status(400)
-          .json({ message: "All fields are required", success: false });
-      }
+    const { name, email, phone, password } = req.body;
 
-      const existingUser = await User.findOne({ email: req.body.email });
+    if (!email || !name || !password || !phone) {
+      return res
+        .status(400)
+        .json({ message: "All fields are required", success: false });
+    }
+
+    try {
+      const existingUser = await User.findOne({ email });
 
       if (existingUser) {
         return res
@@ -22,12 +24,13 @@ module.exports = authController = {
       }
 
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
       const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
+        name,
+        email,
         password: hashedPassword,
+        phone,
       });
 
       const savedUser = await newUser.save();
@@ -87,13 +90,13 @@ module.exports = authController = {
         </html>`
     );
 
-    const token = SignToken(user);
+    const token = SignToken(user._id);
 
     try {
-      res.cookie("jwt", token, {
+      res.cookie("auth", token, {
         httpOnly: true,
-        sameSite: "none",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       });
       res.json({
         message: "Sign in successful!",
@@ -101,13 +104,10 @@ module.exports = authController = {
         user: {
           avatar: user.avatar,
           name: user.name,
-          status: user.status,
           email: user.email,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          newsletter: user.newsletter,
           phone: user.phone,
-          role: user.role,
+          provider: user.provider,
+          newsletter: user.newsletter,
           _id: user._id,
         },
       });
@@ -131,11 +131,24 @@ module.exports = authController = {
     try {
       const { email } = req.body;
       const user = await User.findOne({ email });
+
       if (!user) {
         return res
           .status(404)
           .json({ success: false, error: "User not found" });
       }
+
+      if (user.provider !== "local") {
+        return res.status(404).json({
+          success: false,
+          error: `Instead of resetting password, please sign in with ${user.provider}!`,
+        });
+      }
+
+      if (req.user && req.user._id !== user._id) {
+        return res.status(404).json({ success: false, error: "Wrong Email!" });
+      }
+
       const resetToken = cryptoObj.randomBytes(32).toString("hex");
       const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
       await User.findOneAndUpdate(
@@ -190,6 +203,12 @@ module.exports = authController = {
           .status(404)
           .json({ success: false, message: "User not found, Try again" });
       }
+
+      if (user.resetTokenExpiration < new Date()) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Link expired, Try again" });
+      }
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       await User.findOneAndUpdate(
@@ -214,5 +233,56 @@ module.exports = authController = {
     } catch (error) {
       res.status(400).json({ message: error.message, success: false });
     }
+  },
+
+  callbackSignin: async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found, Please login again!",
+      });
+    }
+
+    await sendEmail(
+      user.email,
+      "Login Successful",
+      `Hi ${user.name}, welcome to our platform!`,
+      `<html lang="en" className="scroll-smooth">
+          <head>
+            <style>
+              p {
+                font-family: Arial, sans-serif;
+                line-height: 1.5;
+                color: #333;
+                padding: 1rem;
+                background-color: #f5f5f5;
+                border: 1px solid #ccc;
+                border-radius: 0.25rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                max-width: 400px;
+              }
+            </style>
+          </head>
+          <body>
+            <p>Hi ${user.name}, welcome to our platform!.</p>
+            <button style="background-color: #4CAF50; color: white; padding: 14px 20px; margin: 8px 0; border: none; cursor: pointer; width: 100%;">
+              <a style="text-decoration: none; color: white;" href="${process.env.CLIENT_AUTH_SUCCESS_URL}" target="_blank">Click here</a>
+            </button>
+          </body>
+        </html>`
+    );
+
+    const token = SignToken(user._id);
+
+    res.cookie("auth", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    });
+
+    // Redirect to the client success URL
+    res.redirect(process.env.CLIENT_AUTH_SUCCESS_URL);
   },
 };
