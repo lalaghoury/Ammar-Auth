@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const braintree = require("braintree");
 require("dotenv").config();
-const Cart = require("../models/Cart");
+const Cart = require("../models/Cart"); 
 const Order = require("../models/Order");
 const { requireSignin } = require("../middlewares/authMiddleware");
 const PendingOrder = require("../models/PendingOrder");
