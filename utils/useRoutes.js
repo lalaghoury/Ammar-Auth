@@ -1,4 +1,3 @@
-const path = require("path");
 const useRoutes = (app) => {
   // Welcome Route
   app.get("/", (req, res) => {

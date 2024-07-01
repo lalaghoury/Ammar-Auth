@@ -1,117 +1,20 @@
 const express = require("express");
+require("dotenv").config();
 const router = express.Router();
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const { requireSignin } = require("../middlewares/authMiddleware");
 const PendingOrder = require("../models/PendingOrder");
-const bodyParser = require("body-parser");
-const stripe = require("stripe")('sk_test_51OH0AiFpp281IlLHIvwwHb8y0ECoQmfKIR7U9hxxrJuK45nrLPdw8MfXbfE1WS9ORfoKeVBpHotDMYNCXfGNq8WB00hfsZpiuC');
+const Stripe = require("stripe");
+const rawJsonParser = require("../middlewares/custom-raw-parser");
 
-// router.get("/token", (req, res) => {
-//   try {
-//     const gateway = new braintree.BraintreeGateway({
-//       environment: braintree.Environment.Sandbox,
-//       merchantId: process.env.BRAINTREE_MERCHANT_ID,
-//       publicKey: process.env.BRAINTREE_PUBLIC_KEY,
-//       privateKey: process.env.BRAINTREE_PRIVATE_KEY,
-//     });
-//     gateway.clientToken.generate({}, function (err, response) {
-//       if (err) {
-//         res.status(500).send(err);
-//       } else {
-//         res.send(response);
-//       }
-//     });
-//   } catch (error) {
-//     console.log({ error: "Something went wrong, please try again later." });
-//   }
-// });
+const stripeApiKey = process.env.STRIPE_SECRET_KEY;
 
-// Braintree Payment code snippet
-// router.post("/payment", requireSignin, async (req, res) => {
-//   try {
-//     const { amount, nonce, products, shipping_address, billing_address } =
-//       req.body;
+if (typeof stripeApiKey !== "string" || !stripeApiKey) {
+  throw new Error("Invalid API key");
+}
 
-//     if (
-//       !amount ||
-//       !nonce ||
-//       !products ||
-//       !shipping_address ||
-//       !billing_address
-//     ) {
-//       res
-//         .status(500)
-//         .send({ message: "Something went wrong, please try again later." });
-//       return;
-//     }
-
-//     gateway.transaction.sale(
-//       {
-//         amount,
-//         paymentMethodNonce: nonce,
-//         options: {
-//           submitForSettlement: true,
-//         },
-//       },
-//       async function (err, result) {
-//         if (err) {
-//           console.error(err);
-//           res
-//             .status(500)
-//             .send({ message: "Something went wrong, please try again later." });
-//         } else {
-//           const orderObj = {
-//             products,
-//             payment: result.transaction.creditCard,
-//             shipping_address:
-//               shipping_address === "billing"
-//                 ? billing_address
-//                 : shipping_address,
-//             billing_address,
-//             amount,
-//             user: req.user.userId,
-//           };
-
-//           try {
-//             await new Order(orderObj).save();
-//           } catch (error) {
-//             console.error("Error creating order:", error);
-//             res.status(500).send({
-//               message: "Something went wrong, please try again later.",
-//             });
-//           }
-
-//           const cart = await Cart.findOneAndUpdate(
-//             { userId: req.user.userId },
-//             {
-//               $set: {
-//                 items: [],
-//                 total: 0,
-//                 couponApplied: false,
-//                 coupon: null,
-//                 savings: 0,
-//                 price: 0,
-//               },
-//             },
-//             { new: true }
-//           );
-//           res.send({
-//             result,
-//             success: true,
-//             cart,
-//             message: "Payment Successfull",
-//           });
-//         }
-//       }
-//     );
-//   } catch (error) {
-//     console.log(error);
-//     res
-//       .status(500)
-//       .send({ message: "Something went wrong, please try again later." });
-//   }
-// });
+const stripe = Stripe(stripeApiKey);
 
 router.post("/stripe", requireSignin, async (req, res) => {
   const { products, amount } = req.body;
@@ -146,7 +49,13 @@ router.post("/stripe", requireSignin, async (req, res) => {
     amount,
   };
 
-  await new PendingOrder(orderObj)?.save();
+  const pending = await new PendingOrder(orderObj)?.save();
+
+  res.cookie("pending", JSON.stringify(pending), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+  });
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -175,8 +84,8 @@ router.post("/stripe", requireSignin, async (req, res) => {
             "Learn more about **your purchase** on our [product page](https://www.stripe.com/).",
         },
       },
-      success_url: "http://localhost:5173/order-confirmed",
-      cancel_url: "http://localhost:5173/cart",
+      success_url: `${process.env.CLIENT_URL}/order-confirmed`,
+      cancel_url: `${process.env.CLIENT_URL}/cart?order_cancelled=true`,
     });
 
     res.send({
@@ -192,103 +101,111 @@ router.post("/stripe", requireSignin, async (req, res) => {
   }
 });
 
-// Use the raw body to verify webhook signature
-router.post(
-  "/stripe_webhooks",
-  bodyParser.raw({ type: "application/json" }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"];
-    // const endpointSecret = process.env.STRIPE_WEBHOOK_ENDPOINT_SECRET;
-    const endpointSecret = 'whsec_644aa9a78d70eb176a146d654c5e5c33f5246d9442b546b22602467b4f7a2c70';
+router.post("/stripe_webhooks", rawJsonParser, async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_ENDPOINT_SECRET;
 
-    let event;
+  let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-      console.log(`⚠️  Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // Handle the event
-    switch (event.type) {
-      case "customer.discount.created": {
-        const pending = await PendingOrder.findOne({
-          customer: event.data.object.customer,
-        });
-
-        if (pending) {
-          pending.coupon = event.data.object.coupon;
-          pending.couponApplied = true;
-          await pending.save();
-        }
-        break;
-      }
-
-      case "charge.updated": {
-        const OldOrder = await PendingOrder.findOne({
-          customer: event.data.object.customer,
-        });
-
-        if (OldOrder) {
-          if (event.data.object.status === "succeeded") {
-            const newOrderObj = {
-              products: OldOrder.products,
-              user: OldOrder.user,
-              payment: {
-                cardType: event.data.object.payment_method_details.card.brand,
-                brand: event.data.object.payment_method_details.type,
-                last4: event.data.object.payment_method_details.card.last4,
-                exp_month:
-                  event.data.object.payment_method_details.card.exp_month,
-                exp_year:
-                  event.data.object.payment_method_details.card.exp_year,
-                country: event.data.object.payment_method_details.card.country,
-                imageUrl: getCardBrandImageUrl(
-                  event.data.object.payment_method_details.card.brand
-                ),
-              },
-              shipping_address: {
-                address_line_1: event.data.object.shipping.address.line1,
-                address_line_2: event.data.object.shipping.address.line2,
-                city: event.data.object.shipping.address.city,
-                state: event.data.object.shipping.address.state,
-                country: event.data.object.shipping.address.country,
-                pincode: event.data.object.shipping.address.postal_code,
-                phone: event.data.object.shipping.phone,
-              },
-              billing_address: {
-                address_line_1: event.data.object.billing_details.address.line1,
-                address_line_2: event.data.object.billing_details.address.line2,
-                city: event.data.object.billing_details.address.city,
-                state: event.data.object.billing_details.address.state,
-                country: event.data.object.billing_details.address.country,
-                pincode: event.data.object.billing_details.address.postal_code,
-                phone: event.data.object.billing_details.phone,
-                email: event.data.object.billing_details.email,
-                name: event.data.object.billing_details.name,
-              },
-              coupon: event.data.object.coupon,
-              amount: event.data.object.amount / 100,
-            };
-
-            await new Order(newOrderObj).save();
-            await PendingOrder.findByIdAndDelete(OldOrder._id);
-            await Cart.findOneAndUpdate(
-              { userId: OldOrder.user },
-              { $set: { items: [], total: 0 } }
-            );
-          }
-        }
-        break;
-      }
-      default:
-        console.log(`Unhandled event type ${event.type}.`);
-    }
-
-    res.json({ received: true });
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`⚠️  Webhook signature verification failed.`, err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-);
+
+  switch (event.type) {
+    case "customer.discount.created": {
+      const pending = await PendingOrder.findOne({
+        customer: event.data.object.customer,
+      });
+
+      if (pending) {
+        pending.coupon = event.data.object.coupon;
+        pending.couponApplied = true;
+        await pending.save();
+      }
+      break;
+    }
+
+    case "charge.updated": {
+      const OldOrder = await PendingOrder.findOne({
+        customer: event.data.object.customer,
+      });
+
+      if (OldOrder) {
+        if (event.data.object.status === "succeeded") {
+          const newOrderObj = {
+            products: OldOrder.products,
+            user: OldOrder.user,
+            payment: {
+              cardType: event.data.object.payment_method_details.card.brand,
+              brand: event.data.object.payment_method_details.type,
+              last4: event.data.object.payment_method_details.card.last4,
+              exp_month:
+                event.data.object.payment_method_details.card.exp_month,
+              exp_year: event.data.object.payment_method_details.card.exp_year,
+              country: event.data.object.payment_method_details.card.country,
+              imageUrl: getCardBrandImageUrl(
+                event.data.object.payment_method_details.card.brand
+              ),
+            },
+            shipping_address: {
+              address_line_1: event.data.object.shipping.address.line1,
+              address_line_2: event.data.object.shipping.address.line2,
+              city: event.data.object.shipping.address.city,
+              state: event.data.object.shipping.address.state,
+              country: event.data.object.shipping.address.country,
+              pincode: event.data.object.shipping.address.postal_code,
+              phone: event.data.object.shipping.phone,
+            },
+            billing_address: {
+              address_line_1: event.data.object.billing_details.address.line1,
+              address_line_2: event.data.object.billing_details.address.line2,
+              city: event.data.object.billing_details.address.city,
+              state: event.data.object.billing_details.address.state,
+              country: event.data.object.billing_details.address.country,
+              pincode: event.data.object.billing_details.address.postal_code,
+              phone: event.data.object.billing_details.phone,
+              email: event.data.object.billing_details.email,
+              name: event.data.object.billing_details.name,
+            },
+            coupon: event.data.object.coupon,
+            amount: event.data.object.amount / 100,
+          };
+
+          await new Order(newOrderObj).save();
+          await PendingOrder.findByIdAndDelete(OldOrder._id);
+          await Cart.findOneAndUpdate(
+            { userId: OldOrder.user },
+            { $set: { items: [], total: 0 } }
+          );
+        }
+      }
+      break;
+    }
+    default:
+      console.log(`Unhandled event type ${event.type}.`);
+  }
+
+  res.json({ received: true });
+});
+
+router.post("/stripe/cancel", async (req, res) => {
+  const pending = JSON.parse(req?.cookies?.pending);
+
+  const pendingOrder = await PendingOrder.findById(pending?._id);
+  if (pendingOrder) {
+    await PendingOrder.findByIdAndDelete(pendingOrder._id);
+    res.clearCookie("pending");
+  }
+  res.json({ success: true });
+});
+
+router.post("/stripe/confirmed", async (req, res) => {
+  res.clearCookie("pending");
+  res.json({ success: true });
+});
 
 // Helper function to get the card brand image URL
 function getCardBrandImageUrl(brand) {

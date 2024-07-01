@@ -118,8 +118,8 @@ module.exports = authController = {
 
   signOut: (req, res) => {
     try {
-      // Clear the JWT cookie
-      res.clearCookie("jwt");
+      // Clear the JWT Auth cookie
+      res.clearCookie("auth");
       res.json({ message: "Logged out successfully", success: true });
     } catch (error) {
       console.error(error);
