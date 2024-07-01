@@ -4,8 +4,16 @@ const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const { requireSignin } = require("../middlewares/authMiddleware");
 const PendingOrder = require("../models/PendingOrder");
-const stripe = require("stripe")(`${process.env.STRIPE_SECRET_KEY}`);
+const Stripe = require("stripe");
 const rawJsonParser = require("../middlewares/custom-raw-parser");
+
+const stripeApiKey = `${process.env.STRIPE_SECRET_KEY}`;
+
+if (typeof stripeApiKey !== "string" || !stripeApiKey) {
+  throw new Error("Invalid API key");
+}
+
+const stripe = Stripe(stripeApiKey?.toString());
 
 router.post("/stripe", requireSignin, async (req, res) => {
   const { products, amount } = req.body;
