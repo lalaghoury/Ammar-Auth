@@ -1,5 +1,4 @@
 const express = require("express");
-require("dotenv").config();
 const router = express.Router();
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
