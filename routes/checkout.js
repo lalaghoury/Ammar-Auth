@@ -86,13 +86,11 @@ router.post("/stripe", requireSignin, async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Something went wrong, please try again",
-        error,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Something went wrong, please try again",
+      error,
+    });
   }
 });
 
@@ -109,97 +107,122 @@ router.post("/stripe_webhooks", rawJsonParser, async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
-    case "customer.discount.created": {
-      const pending = await PendingOrder.findOne({
-        customer: event.data.object.customer,
-      });
+  try {
+    switch (event.type) {
+      case "customer.discount.created": {
+        const pending = await PendingOrder.findOne({
+          customer: event.data.object.customer,
+        });
 
-      if (pending) {
-        pending.coupon = event.data.object.coupon;
-        pending.couponApplied = true;
-        await pending.save();
-      }
-      break;
-    }
-
-    case "charge.updated": {
-      const OldOrder = await PendingOrder.findOne({
-        customer: event.data.object.customer,
-      });
-
-      if (OldOrder) {
-        if (event.data.object.status === "succeeded") {
-          const newOrderObj = {
-            products: OldOrder.products,
-            user: OldOrder.user,
-            payment: {
-              cardType: event.data.object.payment_method_details.card.brand,
-              brand: event.data.object.payment_method_details.type,
-              last4: event.data.object.payment_method_details.card.last4,
-              exp_month:
-                event.data.object.payment_method_details.card.exp_month,
-              exp_year: event.data.object.payment_method_details.card.exp_year,
-              country: event.data.object.payment_method_details.card.country,
-              imageUrl: getCardBrandImageUrl(
-                event.data.object.payment_method_details.card.brand
-              ),
-            },
-            shipping_address: {
-              address_line_1: event.data.object.shipping.address.line1,
-              address_line_2: event.data.object.shipping.address.line2,
-              city: event.data.object.shipping.address.city,
-              state: event.data.object.shipping.address.state,
-              country: event.data.object.shipping.address.country,
-              pincode: event.data.object.shipping.address.postal_code,
-              phone: event.data.object.shipping.phone,
-            },
-            billing_address: {
-              address_line_1: event.data.object.billing_details.address.line1,
-              address_line_2: event.data.object.billing_details.address.line2,
-              city: event.data.object.billing_details.address.city,
-              state: event.data.object.billing_details.address.state,
-              country: event.data.object.billing_details.address.country,
-              pincode: event.data.object.billing_details.address.postal_code,
-              phone: event.data.object.billing_details.phone,
-              email: event.data.object.billing_details.email,
-              name: event.data.object.billing_details.name,
-            },
-            coupon: event.data.object.coupon,
-            amount: event.data.object.amount / 100,
-          };
-
-          await new Order(newOrderObj).save();
-          await PendingOrder.findByIdAndDelete(OldOrder._id);
-          await Cart.findOneAndUpdate(
-            { userId: OldOrder.user },
-            { $set: { items: [], total: 0 } }
-          );
+        if (pending) {
+          pending.coupon = event.data.object.coupon;
+          pending.couponApplied = true;
+          await pending.save();
         }
+        break;
       }
-      break;
-    }
-    default:
-      console.log(`Unhandled event type ${event.type}.`);
-  }
 
-  res.json({ received: true });
+      case "charge.updated": {
+        const OldOrder = await PendingOrder.findOne({
+          customer: event.data.object.customer,
+        });
+
+        if (OldOrder) {
+          if (event.data.object.status === "succeeded") {
+            const newOrderObj = {
+              products: OldOrder.products,
+              user: OldOrder.user,
+              payment: {
+                cardType: event.data.object.payment_method_details.card.brand,
+                brand: event.data.object.payment_method_details.type,
+                last4: event.data.object.payment_method_details.card.last4,
+                exp_month:
+                  event.data.object.payment_method_details.card.exp_month,
+                exp_year:
+                  event.data.object.payment_method_details.card.exp_year,
+                country: event.data.object.payment_method_details.card.country,
+                imageUrl: getCardBrandImageUrl(
+                  event.data.object.payment_method_details.card.brand
+                ),
+              },
+              shipping_address: {
+                address_line_1: event.data.object.shipping.address.line1,
+                address_line_2: event.data.object.shipping.address.line2,
+                city: event.data.object.shipping.address.city,
+                state: event.data.object.shipping.address.state,
+                country: event.data.object.shipping.address.country,
+                pincode: event.data.object.shipping.address.postal_code,
+                phone: event.data.object.shipping.phone,
+              },
+              billing_address: {
+                address_line_1: event.data.object.billing_details.address.line1,
+                address_line_2: event.data.object.billing_details.address.line2,
+                city: event.data.object.billing_details.address.city,
+                state: event.data.object.billing_details.address.state,
+                country: event.data.object.billing_details.address.country,
+                pincode: event.data.object.billing_details.address.postal_code,
+                phone: event.data.object.billing_details.phone,
+                email: event.data.object.billing_details.email,
+                name: event.data.object.billing_details.name,
+              },
+              coupon: event.data.object.coupon,
+              amount: event.data.object.amount / 100,
+            };
+
+            await new Order(newOrderObj).save();
+            await PendingOrder.findByIdAndDelete(OldOrder._id);
+            await Cart.findOneAndUpdate(
+              { userId: OldOrder.user },
+              { $set: { items: [], total: 0 } }
+            );
+          }
+        }
+        break;
+      }
+      default:
+        console.log(`Unhandled event type ${event.type}.`);
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.log("Error handling webhook:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
 });
 
 router.post("/stripe/cancel", async (req, res) => {
-  const pending = JSON.parse(req?.cookies?.pending);
-
-  const pendingOrder = await PendingOrder.findById(pending?._id);
-  if (pendingOrder) {
-    await PendingOrder.findByIdAndDelete(pendingOrder._id);
-    res.clearCookie("pending");
+  try {
+    const pending = JSON.parse(req?.cookies?.pending);
+    const pendingOrder = await PendingOrder.findById(pending?._id);
+    if (pendingOrder) {
+      await PendingOrder.findByIdAndDelete(pendingOrder._id);
+      res.clearCookie("pending");
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      error: err,
+      message: "Something went wrong in /api/checkout/stripe/cancel",
+    });
   }
-  res.json({ success: true });
 });
 
 router.post("/stripe/confirmed", async (req, res) => {
-  res.clearCookie("pending");
-  res.json({ success: true });
+  try {
+    res.clearCookie("pending");
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      error: err,
+      message: "Something went wrong in /api/checkout/stripe/confirmed",
+    });
+  }
 });
 
 // Helper function to get the card brand image URL
