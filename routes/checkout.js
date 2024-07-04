@@ -4,16 +4,8 @@ const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const { requireSignin } = require("../middlewares/authMiddleware");
 const PendingOrder = require("../models/PendingOrder");
-const Stripe = require("stripe");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const rawJsonParser = require("../middlewares/custom-raw-parser");
-
-const stripeApiKey = `${process.env.STRIPE_SECRET_KEY}`;
-
-if (typeof stripeApiKey !== "string" || !stripeApiKey) {
-  throw new Error("Invalid API key");
-}
-
-const stripe = Stripe(stripeApiKey?.toString());
 
 router.post("/stripe", requireSignin, async (req, res) => {
   const { products, amount } = req.body;
@@ -32,31 +24,31 @@ router.post("/stripe", requireSignin, async (req, res) => {
     };
   });
 
-  const customer = await stripe.customers.create({
-    email: req?.user?.email,
-    metadata: {
-      user_id: req?.user?._id?.toString(),
-    },
-    name: req?.user?.name,
-    phone: req?.user?.phone,
-  });
-
-  const orderObj = {
-    products,
-    customer: customer.id,
-    user: req.user._id,
-    amount,
-  };
-
-  const pending = await new PendingOrder(orderObj)?.save();
-
-  res.cookie("pending", JSON.stringify(pending), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-  });
-
   try {
+    const customer = await stripe.customers.create({
+      email: req?.user?.email,
+      metadata: {
+        user_id: req?.user?._id?.toString(),
+      },
+      name: req?.user?.name,
+      phone: req?.user?.phone,
+    });
+
+    const orderObj = {
+      products,
+      customer: customer.id,
+      user: req.user._id,
+      amount,
+    };
+
+    const pending = await new PendingOrder(orderObj)?.save();
+
+    res.cookie("pending", JSON.stringify(pending), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,
@@ -93,10 +85,14 @@ router.post("/stripe", requireSignin, async (req, res) => {
       message: "Stripe session created successfully!",
     });
   } catch (error) {
+    console.log(error);
     res
       .status(500)
-      .send({ message: "Something went wrong, please try again", error });
-    console.log(error?.message);
+      .send({
+        success: false,
+        message: "Something went wrong, please try again",
+        error,
+      });
   }
 });
 
