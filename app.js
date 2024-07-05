@@ -3,7 +3,7 @@ require("dotenv").config();
 const PORT = process.env.PORT || 8000;
 
 // Configuring Middlewares
-const useMiddlwares = require("./utils/useMiddlwares");
+const useMiddlwares = require("./utils/useMiddlewares");
 useMiddlwares(app);
 
 // Configuring Routes

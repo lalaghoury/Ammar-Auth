@@ -10,6 +10,7 @@ const useCors = (app) => {
         "https://euphoria-frontend-theta.vercel.app",
         "https://euphoria-eight.vercel.app",
         "https://euphoria-commerce.netlify.app",
+        "*"
       ],
       credentials: true,
     })
