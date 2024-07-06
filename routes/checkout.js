@@ -108,17 +108,6 @@ router.post("/stripe_webhooks", async (req, res) => {
         break;
       }
 
-      case "checkout.session.completed": {
-        const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
-          event.data.object.id,
-          {
-            expand: ["line_items"],
-          }
-        );
-        const lineItems = sessionWithLineItems.line_items;
-        console.log("🚀 ~ router.post ~ lineItems:", JSON.stringify(lineItems));
-      }
-
       default:
         console.log(`Unhandled event type ${event.type}.`);
     }
