@@ -23,7 +23,6 @@ const userSchema = new Schema(
         },
         message: "Please enter a valid phone number",
       },
-      unique: true,
     },
     resetToken: { type: String, default: "" },
     resetTokenExpiration: { type: Date, default: null },

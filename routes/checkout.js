@@ -149,8 +149,13 @@ router.post("/stripe/confirmed", async (req, res) => {
         { userId: PendingOrder.user },
         { $set: { items: [], total: 0 } }
       );
-      res.clearCookie("pending");
-      res.json({ success: true });
+      res.clearCookie("pending", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      });
+
+      res.json({ success: true, message: "Order confirmed", pendingOrder });
     } else {
       res.status(404).json({ error: "Pending order not found" });
     }

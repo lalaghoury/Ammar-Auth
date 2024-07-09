@@ -24,11 +24,12 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.BASE_URL}/api/auth/google/callback`,
-      scope: ["profile", "email", "openid"],
+      scope: ["profile", "email", "openid", "https://www.googleapis.com/auth/user.phonenumbers.read"],
       usernameField: "email",
     },
 
     async function (_, _, profile, done) {
+      console.log("🚀 ~ profile:", profile)
       try {
         let user = await User.findOne({ email: profile._json.email });
 
