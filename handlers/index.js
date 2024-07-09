@@ -1,5 +1,6 @@
 const PendingOrder = require("../models/PendingOrder");
 const Order = require("../models/Order");
+const Cart = require("../models/Cart");
 const getCardBrandImagesByName = require("../helpers/getCardBrandImagesByName");
 
 const handleDiscountCreated = async (e) => {
@@ -63,6 +64,10 @@ const handleChargeUpdated = async (e) => {
     };
 
     await new Order(newOrderObj).save();
+    await Cart.findOneAndUpdate(
+      { userId: PendingOrder.user },
+      { $set: { items: [], total: 0 } }
+    );
   }
 };
 
