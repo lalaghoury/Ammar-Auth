@@ -6,7 +6,16 @@ const userSchema = new Schema(
     name: { type: String, required: true, maxlength: 50 },
     email: { type: String, required: true, unique: true, maxlength: 50 },
     password: { type: String, required: true },
-    role: { type: String, default: "user", enum: ["user", "admin"] },
+    role: {
+      type: String,
+      default: "user",
+      enum: ["startup", "admin", "sponsor"],
+    },
+    sub_role: {
+      type: String,
+      required: true,
+      enum: ["founder", "investor", "mentor", "employee", "manager", "admin"],
+    },
     newsletter: { type: Boolean, default: false },
     avatar: {
       type: String,
@@ -32,7 +41,6 @@ const userSchema = new Schema(
       default: "active",
       enum: ["active", "disabled", "blocked"],
     },
-    wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     provider: {
       type: String,
       default: "local",

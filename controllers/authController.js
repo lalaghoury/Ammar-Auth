@@ -6,13 +6,14 @@ const { SignToken } = require("../middlewares/authMiddleware");
 
 module.exports = authController = {
   signUp: async (req, res) => {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, role, sub_role } = req.body;
 
-    if (!email || !name || !password || !phone) {
+    if (!email || !name || !password || !phone || !role || !sub_role) {
       return res
-        .status(400)
-        .json({ message: "All fields are required", success: false });
+      .status(400)
+      .json({ message: "All fields are required", success: false });
     }
+    console.log("🚀 ~ signUp: ~ sub_role:", sub_role)
 
     try {
       const existingUser = await User.findOne({ email });
@@ -31,6 +32,8 @@ module.exports = authController = {
         email,
         password: hashedPassword,
         phone,
+        role: role.toLowerCase(),
+        sub_role: sub_role.toLowerCase(),
       });
 
       const savedUser = await newUser.save();
@@ -38,7 +41,7 @@ module.exports = authController = {
       sendEmail(
         savedUser.email,
         "Account Created",
-        `Welcome ${savedUser.name}! You have successfully created an account , Baobao.`
+        `Welcome ${savedUser.name}! You have successfully created an account as a with a role of ${role} as ${sub_role}, Baobao.`
       );
 
       res.status(201).json({
@@ -105,6 +108,8 @@ module.exports = authController = {
           avatar: user.avatar,
           name: user.name,
           email: user.email,
+          role: user.role,
+          sub_role: user.sub_role.toLowerCase(),
           phone: user.phone,
           provider: user.provider,
           newsletter: user.newsletter,
