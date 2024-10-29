@@ -1,7 +1,7 @@
 const useRoutes = (app) => {
   // Welcome Route
   app.get("/", (req, res) => {
-    res.send("Assalom-Alaikum! Euphoria Backend API");
+    res.send("Assalom-Alaikum! Ammar Backend API");
   });
 
   // User Routes
