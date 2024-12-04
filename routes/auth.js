@@ -5,6 +5,8 @@ const {
   requireSignin,
   isAdmin,
   notRequireSignin,
+  isSponsor,
+  isStartup,
 } = require("../middlewares/authMiddleware");
 require("../strategies/local-strategy");
 require("../strategies/google-strategy.js");
@@ -90,7 +92,8 @@ router.get("/login/failed", (req, res) => {
 
 // Euphoria-Backend\routes\auth.js~Verified
 router.get("/verify/admin", isAdmin, authController.verified);
+router.get("/verify/sponsor", isSponsor, authController.verified);
+router.get("/verify/startup", isStartup, authController.verified);
 router.get("/verify", requireSignin, authController.verified);
-router.get("/verify/admin", isAdmin, authController.verified);
 
 module.exports = router;

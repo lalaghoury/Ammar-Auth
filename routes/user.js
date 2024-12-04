@@ -22,6 +22,9 @@ router.delete("/admin/delete/:id", isAdmin, userController.deleteUser);
 // @route GET api/users/get-user (without Id) for user
 router.get("/get-user", requireSignin, userController.getUserWithAuth);
 
+// @route GET api/users/single/:id for user
+router.get("/single/:id", requireSignin, userController.getUserById);
+
 // @route PUT api/users/single/update/:id for user
 router.put("/single/update/:id", requireSignin, userController.updateUser);
 
