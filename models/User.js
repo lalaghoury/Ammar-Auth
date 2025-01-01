@@ -13,8 +13,16 @@ const userSchema = new Schema(
     },
     sub_role: {
       type: String,
-      required: true,
-      enum: ["founder", "investor", "mentor", "employee", "manager", "admin"],
+      required: false,
+      enum: [
+        "founder",
+        "investor",
+        "mentor",
+        "employee",
+        "manager",
+        "admin",
+        "advisor",
+      ],
     },
     newsletter: { type: Boolean, default: false },
     avatar: {

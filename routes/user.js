@@ -1,37 +1,48 @@
-const express = require("express");
-const userController = require("../controllers/userController");
-const { requireSignin, isAdmin } = require("../middlewares/authMiddleware");
+const express = require('express');
+const userController = require('../controllers/userController');
+const {
+  requireSignin,
+  isAdmin,
+  isStartup,
+} = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 // Admin Routes
 
 // @route GET api/users/admin/all for admin
-router.get("/admin/all", isAdmin, userController.getAllUsers);
+router.get('/admin/all', isAdmin, userController.getAllUsers);
 
 // @route GET api/users/admin/get-user/:id for admin
-router.get("/admin/get-user/:id", isAdmin, userController.getUserById);
+router.get('/admin/get-user/:id', isAdmin, userController.getUserById);
 
 // @route PUT api/users/admin/update/:id for admin
-router.put("/admin/update/:id", isAdmin, userController.updateUser);
+router.put('/admin/update/:id', isAdmin, userController.updateUser);
 
 // @route DELETE api/users/admin/delete:id for admin
-router.delete("/admin/delete/:id", isAdmin, userController.deleteUser);
+router.delete('/admin/delete/:id', isAdmin, userController.deleteUser);
 
 // User Routes
 
 // @route GET api/users/get-user (without Id) for user
-router.get("/get-user", requireSignin, userController.getUserWithAuth);
+router.get('/get-user', requireSignin, userController.getUserWithAuth);
+
+// @route GET api/users/sponsors/all for admin
+router.get('/sponsors/all', isStartup, userController.getAllSponsors);
 
 // @route GET api/users/single/:id for user
-router.get("/single/:id", requireSignin, userController.getUserById);
+router.get('/single/:id', requireSignin, userController.getUserById);
 
 // @route PUT api/users/single/update/:id for user
-router.put("/single/update/:id", requireSignin, userController.updateUser);
+router.put('/single/update/:id', requireSignin, userController.updateUser);
 
 // @route PUT api/users/single/update/password/:id for user
-router.put("/single/update/password/:id", requireSignin, userController.updateUserPassword);
+router.put(
+  '/single/update/password/:id',
+  requireSignin,
+  userController.updateUserPassword
+);
 
 // @route DELETE api/users/:id for user
-router.delete("/delete/:id", requireSignin, userController.deleteUser);
+router.delete('/delete/:id', requireSignin, userController.deleteUser);
 
 module.exports = router;

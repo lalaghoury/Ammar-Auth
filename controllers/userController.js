@@ -1,5 +1,5 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 function removeNullUndefined(obj) {
   return Object.entries(obj).reduce((acc, [key, value]) => {
@@ -14,31 +14,41 @@ module.exports = userController = {
   getAllUsers: async (req, res) => {
     try {
       const users = await User.find();
-      res.json({ users, success: true, message: "All users fetched" });
+      res.json({ users, success: true, message: 'All users fetched' });
     } catch (error) {
       res
         .status(500)
-        .json({ error, message: "Failed to get users", success: false });
+        .json({ error, message: 'Failed to get users', success: false });
+    }
+  },
+  getAllSponsors: async (req, res) => {
+    try {
+      const users = await User.find({ role: 'sponsor' });
+      res.json({ users, success: true, message: 'All sponsors fetched' });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error, message: 'Failed to get sponsors', success: false });
     }
   },
   getUserById: async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
-      res.json({ user, success: true, message: "User fetched" });
+      res.json({ user, success: true, message: 'User fetched' });
     } catch (error) {
       res
         .status(500)
-        .json({ error, message: "Failed to get user", success: false });
+        .json({ error, message: 'Failed to get user', success: false });
     }
   },
   getUserWithAuth: async (req, res) => {
     try {
       const user = await User.findById(req.user.userId);
-      res.json({ user, success: true, message: "User fetched" });
+      res.json({ user, success: true, message: 'User fetched' });
     } catch (error) {
       res
         .status(500)
-        .json({ error, message: "Failed to get user", success: false });
+        .json({ error, message: 'Failed to get user', success: false });
     }
   },
   updateUser: async (req, res) => {
@@ -56,14 +66,14 @@ module.exports = userController = {
       if (!user) {
         return res
           .status(404)
-          .json({ message: "User not found", success: false });
+          .json({ message: 'User not found', success: false });
       }
 
-      res.json({ user, success: true, message: "User updated successfully" });
+      res.json({ user, success: true, message: 'User updated successfully' });
     } catch (error) {
       res
         .status(500)
-        .json({ error, message: "Failed to update user", success: false });
+        .json({ error, message: 'Failed to update user', success: false });
     }
   },
   updateUserPassword: async (req, res) => {
@@ -76,14 +86,14 @@ module.exports = userController = {
       if (!user) {
         return res
           .status(404)
-          .json({ message: "User not found", success: false });
+          .json({ message: 'User not found', success: false });
       }
 
       const isMatch = await bcrypt.compare(oldPassword, user.password);
       if (!isMatch) {
         return res
           .status(400)
-          .json({ message: "Old password is incorrect", success: false });
+          .json({ message: 'Old password is incorrect', success: false });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -99,28 +109,28 @@ module.exports = userController = {
       if (!updatedUser) {
         return res
           .status(404)
-          .json({ message: "User not found", success: false });
+          .json({ message: 'User not found', success: false });
       }
 
       res.json({
         user: updatedUser,
         success: true,
-        message: "Password updated Successfully",
+        message: 'Password updated Successfully',
       });
     } catch (error) {
       res
         .status(500)
-        .json({ error, message: "Failed to update user", success: false });
+        .json({ error, message: 'Failed to update user', success: false });
     }
   },
   deleteUser: async (req, res) => {
     try {
       const user = await User.findByIdAndDelete(req.params.id);
-      res.json({ user, success: true, message: "User deleted Successfully" });
+      res.json({ user, success: true, message: 'User deleted Successfully' });
     } catch (error) {
       res.status(500).json({
         error: error.message,
-        message: "Failed to delete user",
+        message: 'Failed to delete user',
         success: false,
       });
     }
