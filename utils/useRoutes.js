@@ -16,6 +16,10 @@ const useRoutes = (app) => {
   const chatRoute = require('../routes/chat');
   app.use('/api/chats', chatRoute);
 
+  // Message Routes
+  const messageRoute = require('../routes/message');
+  app.use('/api/messages', messageRoute);
+
   // Auth Routes
   const authRoute = require('../routes/auth');
   app.use('/api/auth', authRoute);

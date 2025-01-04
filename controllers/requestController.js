@@ -1,3 +1,5 @@
+const Chat = require('../models/Chat');
+const Message = require('../models/Message');
 const Request = require('../models/Request');
 
 function removeNullUndefined(obj) {
@@ -50,6 +52,31 @@ module.exports = userController = {
         .populate('sponsor')
         .populate('startup');
 
+      if (request.status === 'APPROVED') {
+        // Create a chat between sponsor and startup
+        const chat = new Chat({
+          sponsor: request.sponsor,
+          startup: request.startup,
+          // messages: [message._id],
+          // lastMessage: message._id,
+        });
+
+        // Create a starter message for the chat
+        const message = new Message({
+          chatId: chat._id,
+          sender: chat.sponsor,
+          receiver: chat.startup,
+          content: 'Hello, I am interested in your startup',
+          type: 'text',
+        });
+        await message.save();
+
+        // Update the chat with the message
+        chat.messages.push(message._id);
+        chat.lastMessage = message._id;
+        await chat.save();
+      }
+
       if (!request) {
         return res
           .status(404)
@@ -62,6 +89,7 @@ module.exports = userController = {
         message: 'Request updated successfully',
       });
     } catch (error) {
+      console.log('🚀 ~ updateRequest: ~ error:', error);
       res
         .status(500)
         .json({ error, message: 'Failed to update request', success: false });

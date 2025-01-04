@@ -27,6 +27,7 @@
     "passport-discord": "^0.1.4",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
+    "pusher": "^5.2.0",
     "uuid": "^9.0.1"
   },
   "description": "",
