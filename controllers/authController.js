@@ -28,6 +28,7 @@ module.exports = authController = {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const verificationCode = cryptoObj.randomBytes(3).toString('hex');
+      console.log("🚀 ~ signUp: ~ verificationCode:", verificationCode)
       const verificationCodeExpiration = new Date(Date.now() + 10 * 60 * 1000);
 
       const newUser = new User({
@@ -298,7 +299,7 @@ module.exports = authController = {
 
   verifyCode: async (req, res) => {
     try {
-      const { email, verificationCode } = req.body;
+      const { email, code:verificationCode } = req.body;
       const user = await User.findOne({ email });
 
       if (!user) {
