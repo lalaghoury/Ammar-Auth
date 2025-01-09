@@ -44,6 +44,8 @@ const userSchema = new Schema(
     },
     resetToken: { type: String, default: "" },
     resetTokenExpiration: { type: Date, default: null },
+    verificationCode: { type: String, default: "" },
+    verificationCodeExpiration: { type: Date, default: null },
     status: {
       type: String,
       default: "active",
