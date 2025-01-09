@@ -27,6 +27,9 @@ module.exports = authController = {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      const verificationCode = cryptoObj.randomBytes(3).toString('hex');
+      const verificationCodeExpiration = new Date(Date.now() + 10 * 60 * 1000);
+
       const newUser = new User({
         name,
         email,
@@ -34,18 +37,20 @@ module.exports = authController = {
         phone,
         role: role.toLowerCase(),
         sub_role: sub_role.toLowerCase(),
+        verificationCode,
+        verificationCodeExpiration
       });
 
       const savedUser = await newUser.save();
 
       sendEmail(
         savedUser.email,
-        "Account Created",
-        `Welcome ${savedUser.name}! You have successfully created an account as a with a role of ${role} as ${sub_role}, Baobao.`
+        "Account Verification",
+        `Welcome ${savedUser.name}! Your verification code is ${verificationCode}. It will expire in 10 minutes.`
       );
 
       res.status(201).json({
-        message: "Account created successfully",
+        message: "Account created successfully. Please verify your email.",
         success: true,
         savedUser,
       });
@@ -290,4 +295,32 @@ module.exports = authController = {
     // Redirect to the client success URL
     res.redirect(process.env.CLIENT_AUTH_SUCCESS_URL);
   },
+
+  verifyCode: async (req, res) => {
+    try {
+      const { email, verificationCode } = req.body;
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      if (user.verificationCode !== verificationCode) {
+        return res.status(400).json({ success: false, message: "Invalid verification code" });
+      }
+
+      if (user.verificationCodeExpiration < new Date()) {
+        return res.status(400).json({ success: false, message: "Verification code expired" });
+      }
+
+      user.verificationCode = null;
+      user.verificationCodeExpiration = null;
+      await user.save();
+
+      res.status(200).json({ success: true, message: "Verification successful" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  }
 };

@@ -96,4 +96,7 @@ router.get("/verify/sponsor", isSponsor, authController.verified);
 router.get("/verify/startup", isStartup, authController.verified);
 router.get("/verify", requireSignin, authController.verified);
 
+// New route for verifying the verification code
+router.post("/verify-code", authController.verifyCode);
+
 module.exports = router;
